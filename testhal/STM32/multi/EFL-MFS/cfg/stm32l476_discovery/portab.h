@@ -39,6 +39,16 @@
 
 #define PORTAB_SD1                  SD2
 
+#define PORTAB_MFS_CFG \
+  .flashp           = (BaseFlash *)&EFLD1, \
+  .erased           = 0xFFFFFFFFU,         \
+  .bank_size        = 4096U,               \
+  .bank0_start      = 128U,                \
+  .bank0_sectors    = 2U,                  \
+  .bank1_start      = 130U,                \
+  .bank1_sectors    = 2U
+
+
 /*===========================================================================*/
 /* Module pre-compile time settings.                                         */
 /*===========================================================================*/
