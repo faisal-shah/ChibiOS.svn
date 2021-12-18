@@ -16,7 +16,8 @@
 
 /**
  * @file    hal_efl_lld.h
- * @brief   STM32F722/23/32/33 Embedded Flash subsystem low level driver header.
+ * @brief   STM32F722/23/32/33/30 Embedded Flash subsystem
+ *          low level driver header.
  *
  * @addtogroup HAL_EFL
  * @{
@@ -36,7 +37,7 @@
 /*===========================================================================*/
 
 /**
- * @name    STM32L4xx configuration options
+ * @name    STM32F7xx configuration options
  * @{
  */
 /**
@@ -54,6 +55,8 @@
 #if defined(STM32F722xx) || defined(STM32F723xx) || defined(STM32F732xx) || \
     defined(STM32F733xx)
 #define STM32_FLASH_TOTAL_SIZE  (512U*1024U)
+#elif defined(STM32F730xx)
+#define STM32_FLASH_TOTAL_SIZE  (64U*1024U)
 #else
 #error "Device not supported by HAL EFL LLD"
 #endif

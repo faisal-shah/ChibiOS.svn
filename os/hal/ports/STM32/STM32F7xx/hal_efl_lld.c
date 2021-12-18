@@ -16,7 +16,7 @@
 
 /**
  * @file    hal_efl_lld.c
- * @brief   STM32F722/23/32/33 Embedded Flash subsystem low level
+ * @brief   STM32F722/23/32/33/30 Embedded Flash subsystem low level
  *          driver source.
  *
  * @addtogroup HAL_EFL
@@ -83,7 +83,9 @@ EFlashDriver EFLD1;
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
 
-const flash_sector_descriptor_t efl_lld_sectors[] = {
+const flash_sector_descriptor_t efl_lld_sectors[FLASH_SECTOR_TOTAL] = {
+#if defined(STM32F722xx) || defined(STM32F723xx) || defined(STM32F732xx) || \
+    defined(STM32F733xx) || defined(STM32F730xx)
     {
         .offset = 0U*16U*1024U,
         .size   = 16U*1024U,
@@ -100,6 +102,8 @@ const flash_sector_descriptor_t efl_lld_sectors[] = {
         .offset = 3U*16U*1024U,
         .size   = 16U*1024U,
     },
+#if defined(STM32F722xx) || defined(STM32F723xx) || defined(STM32F732xx) || \
+    defined(STM32F733xx)
     {
         .offset = 4U*16U*1024U,
         .size   = 64U*1024U,
@@ -116,6 +120,8 @@ const flash_sector_descriptor_t efl_lld_sectors[] = {
         .offset = 4U*16U*1024U + 64U*1024U + 2U*128U*1024U,
         .size   = 128U*1024U,
     },
+#endif
+#endif
 };
 
 static const flash_descriptor_t efl_lld_descriptor = {
@@ -124,7 +130,7 @@ static const flash_descriptor_t efl_lld_descriptor = {
                       FLASH_ATTR_ECC_CAPABLE   |
                       FLASH_ATTR_ECC_ZERO_LINE_CAPABLE,
  .page_size         = STM32_FLASH_LINE_SIZE,
- .sectors_count     = 8U,
+ .sectors_count     = FLASH_SECTOR_TOTAL,
  .sectors           = efl_lld_sectors,
  .sectors_size      = 0U,
  .address           = (uint8_t *)FLASHAXI_BASE,
