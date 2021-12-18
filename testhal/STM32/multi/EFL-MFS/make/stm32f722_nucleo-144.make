@@ -102,7 +102,7 @@ include $(CHIBIOS)/os/license/license.mk
 include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
-include $(CHIBIOS)/os/hal/ports/STM32/STM32F7xx/platform_f72x_f732_f733_f730.mk
+include $(CHIBIOS)/os/hal/ports/STM32/STM32F7xx/platform.mk
 include $(CHIBIOS)/os/hal/boards/ST_NUCLEO144_F722ZE/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).

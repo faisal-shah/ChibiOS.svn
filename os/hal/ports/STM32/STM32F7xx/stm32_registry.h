@@ -139,6 +139,9 @@
 #define STM32_EXTI_NUM_LINES                24
 #define STM32_EXTI_IMR1_MASK                0xFF000000
 
+/* Flash attributes.*/
+#define STM32_FLASH_NUMBER_OF_BANKS         1
+
 /* GPIO attributes.*/
 #define STM32_HAS_GPIOA                     TRUE
 #define STM32_HAS_GPIOB                     TRUE
@@ -471,6 +474,9 @@
 /* EXTI attributes.*/
 #define STM32_EXTI_NUM_LINES                24
 #define STM32_EXTI_IMR1_MASK                0xFF000000
+
+/* Flash attributes.*/
+#define STM32_FLASH_NUMBER_OF_BANKS         1
 
 /* GPIO attributes.*/
 #define STM32_HAS_GPIOA                     TRUE
@@ -811,6 +817,9 @@
 /* EXTI attributes.*/
 #define STM32_EXTI_NUM_LINES                24
 #define STM32_EXTI_IMR1_MASK                0xFF000000
+
+/* Flash attributes.*/
+#define STM32_FLASH_NUMBER_OF_BANKS         2
 
 /* GPIO attributes.*/
 #define STM32_HAS_GPIOA                     TRUE

@@ -1,5 +1,5 @@
 /*
-    ChibiOS - Copyright (C) 2006..2018 Giovanni Di Sirio
+    ChibiOS - Copyright (C) 2006..2019 Giovanni Di Sirio
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 /**
  * @file    hal_efl_lld.h
- * @brief   STM32F722/23/32/33/30 Embedded Flash subsystem
- *          low level driver header.
+ * @brief   STM32F7xx Embedded Flash subsystem low level driver header.
  *
  * @addtogroup HAL_EFL
  * @{
@@ -53,18 +52,24 @@
 /*===========================================================================*/
 
 #if defined(STM32F722xx) || defined(STM32F723xx) || defined(STM32F732xx) || \
-    defined(STM32F733xx)
-#define STM32_FLASH_TOTAL_SIZE  (512U*1024U)
-#elif defined(STM32F730xx)
-#define STM32_FLASH_TOTAL_SIZE  (64U*1024U)
-#else
-#error "Device not supported by HAL EFL LLD"
-#endif
+    defined(STM32F733xx) || defined(STM32F730xx) || defined(STM32F756xx) || \
+    defined(STM32F745xx) || defined(STM32F746xx) || defined(STM32F750xx) || \
+    defined(STM32F765xx) || defined(STM32F767xx) || defined(STM32F769xx) || \
+    defined(STM32F777xx) || defined(STM32F779xx) ||                         \
+    defined(__DOXYGEN__)
 
+#else
+#error "This EFL driver does not support the selected device"
+#endif
 
 /*===========================================================================*/
 /* Driver data structures and types.                                         */
 /*===========================================================================*/
+
+/* A flash size declaration. */
+typedef struct {
+  const flash_descriptor_t* desc;
+} efl_lld_size_t;
 
 /*===========================================================================*/
 /* Driver macros.                                                            */
@@ -75,7 +80,8 @@
  */
 #define efl_lld_driver_fields                                               \
   /* Flash registers.*/                                                     \
-  FLASH_TypeDef             *flash
+  FLASH_TypeDef             *flash;                                         \
+  const flash_descriptor_t  *descriptor;
 
 /**
  * @brief   Low level fields of the embedded flash configuration structure.
