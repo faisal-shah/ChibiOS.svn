@@ -469,7 +469,7 @@ static const flash_descriptor_t efl_lld_size1[STM32_FLASH_NUMBER_OF_BANKS] = {
         .sectors_count     = FLASH_SECTOR_TOTAL_1M/2
         .sectors           = efl_lld_sectors_single_1M,
         .sectors_size      = 0U,
-        .address           = (uint8_t *)FLASH_BASE,
+        .address           = (uint8_t *)FLASHAXI_BASE,
         .size              = 1U*1024U*1024U,
       },
       { /* Bank 1 & 2 (DBM) organisation. */
@@ -481,7 +481,7 @@ static const flash_descriptor_t efl_lld_size1[STM32_FLASH_NUMBER_OF_BANKS] = {
         .sectors_count     = FLASH_SECTOR_TOTAL_1M,
         .sectors           = efl_lld_sectors_dual_1M,
         .sectors_size      = 0U,
-        .address           = (uint8_t *)FLASH_BASE,
+        .address           = (uint8_t *)FLASHAXI_BASE,
         .size              = 1U*1024U*1024U,
       }
 };
@@ -497,7 +497,7 @@ static const flash_descriptor_t efl_lld_size2[STM32_FLASH_NUMBER_OF_BANKS] = {
         .sectors_count     = FLASH_SECTOR_TOTAL_2M/2,
         .sectors           = efl_lld_sectors_single_2M,
         .sectors_size      = 0U,
-        .address           = (uint8_t *)FLASH_BASE,
+        .address           = (uint8_t *)FLASHAXI_BASE,
         .size              = 2U*1024U*1024U,
       },
       { /* Bank 1 & 2 (DBM) organisation. */
@@ -509,7 +509,7 @@ static const flash_descriptor_t efl_lld_size2[STM32_FLASH_NUMBER_OF_BANKS] = {
         .sectors_count     = FLASH_SECTOR_TOTAL_2M,
         .sectors           = efl_lld_sectors_dual_2M,
         .sectors_size      = 0U,
-        .address           = (uint8_t *)FLASH_BASE,
+        .address           = (uint8_t *)FLASHAXI_BASE,
         .size              = 2U*1024U*1024U,
       }
 };
