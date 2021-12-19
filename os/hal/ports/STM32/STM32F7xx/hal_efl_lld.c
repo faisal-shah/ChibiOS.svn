@@ -466,7 +466,7 @@ static const flash_descriptor_t efl_lld_size1[STM32_FLASH_NUMBER_OF_BANKS] = {
                              FLASH_ATTR_ECC_CAPABLE   |
                              FLASH_ATTR_ECC_ZERO_LINE_CAPABLE,
         .page_size         = STM32_FLASH_LINE_SIZE,
-        .sectors_count     = FLASH_SECTOR_TOTAL_1M/2
+        .sectors_count     = FLASH_SECTOR_TOTAL_1M/2,
         .sectors           = efl_lld_sectors_single_1M,
         .sectors_size      = 0U,
         .address           = (uint8_t *)FLASHAXI_BASE,
@@ -904,7 +904,7 @@ flash_error_t efl_lld_start_erase_all(void *instance) {
     __DSB();
 
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(bank->address +
-                bank->sectors[sector].offset), bank->sectors[sector].size);
+                bank->sectors[bank->sectors_count/2U].offset), bank->size/2U);
     SCB_InvalidateICache();
 
     osalSysRestoreStatusX(sts);
@@ -942,6 +942,7 @@ flash_error_t efl_lld_start_erase_sector(void *instance,
   EFlashDriver *devp = (EFlashDriver *)instance;
   const flash_descriptor_t *bank = efl_lld_get_descriptor(instance);
   flash_error_t err = FLASH_NO_ERROR;
+  flash_sector_t sector_save = sector;
   osalDbgCheck(sector < bank->sectors_count);
   osalDbgAssert((devp->state == FLASH_READY) || (devp->state == FLASH_ERASE),
                 "invalid state");
@@ -999,9 +1000,8 @@ flash_error_t efl_lld_start_erase_sector(void *instance,
   __DSB();
 
 
-  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(efl_lld_descriptor.address +
-          efl_lld_descriptor.sectors[sector].offset),
-          efl_lld_descriptor.sectors[sector].size);
+  SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(bank->address +
+          bank->sectors[sector_save].offset), bank->sectors[sector_save].size);
   SCB_InvalidateICache();
 
   osalSysRestoreStatusX(sts);
