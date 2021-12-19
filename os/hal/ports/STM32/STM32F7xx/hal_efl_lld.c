@@ -139,12 +139,7 @@ static const flash_descriptor_t efl_lld_descriptor = {
  .sectors           = efl_lld_sectors,
  .sectors_size      = 0U,
  .address           = (uint8_t *)FLASHAXI_BASE,
-#if defined(STM32F722xx) || defined(STM32F723xx) || defined(STM32F732xx) || \
-    defined(STM32F733xx)
- .size              = 512U*1024U,
-#elif defined(STM32F730xx)
- .size              = 64U*1024U,
-#endif
+ .size              = FLASH_END - FLASHAXI_BASE,
 };
 #endif
 
@@ -197,11 +192,7 @@ static const flash_descriptor_t efl_lld_descriptor = {
  .sectors           = efl_lld_sectors,
  .sectors_size      = 0U,
  .address           = (uint8_t *)FLASHAXI_BASE,
-#if defined(STM32F756xx) || defined(STM32F745xx) || defined(STM32F746xx)
- .size              = 1024U*1024U,
-#elif defined(STM32F750xx)
- .size              = 64U*1024U,
-#endif
+ .size              = FLASH_END - FLASHAXI_BASE,
 };
 #endif
 
