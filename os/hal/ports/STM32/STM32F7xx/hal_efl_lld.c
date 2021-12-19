@@ -903,13 +903,14 @@ flash_error_t efl_lld_start_erase_all(void *instance) {
     /* ensure the completion of write operation */
     __DSB();
 
+    stm32_flash_wait_busy(devp);
+
     SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(bank->address +
                 bank->sectors[bank->sectors_count/2U].offset), bank->size/2U);
     SCB_InvalidateICache();
 
     osalSysRestoreStatusX(sts);
 
-    stm32_flash_wait_busy(devp);
     err = stm32_flash_check_errors(devp);
     return err;
   }
@@ -999,6 +1000,8 @@ flash_error_t efl_lld_start_erase_sector(void *instance,
   /* ensure the completion of write operation */
   __DSB();
 
+  stm32_flash_wait_busy(devp);
+  devp->flash->CR &= ~FLASH_CR_SER;
 
   SCB_CleanInvalidateDCache_by_Addr((uint32_t *)(bank->address +
           bank->sectors[sector_save].offset), bank->sectors[sector_save].size);
@@ -1006,8 +1009,6 @@ flash_error_t efl_lld_start_erase_sector(void *instance,
 
   osalSysRestoreStatusX(sts);
 
-  stm32_flash_wait_busy(devp);
-  devp->flash->CR &= ~FLASH_CR_SER;
 
   err = stm32_flash_check_errors(devp);
   return err;
