@@ -139,7 +139,7 @@ static const flash_descriptor_t efl_lld_descriptor = {
  .sectors           = efl_lld_sectors,
  .sectors_size      = 0U,
  .address           = (uint8_t *)FLASHAXI_BASE,
- .size              = FLASH_END - FLASHAXI_BASE,
+ .size              = FLASH_END - FLASHAXI_BASE + 1U,
 };
 #endif
 
@@ -160,11 +160,11 @@ const flash_sector_descriptor_t efl_lld_sectors[FLASH_SECTOR_TOTAL] = {
         .size   = 32U*1024U,
     },
     {
-        .offset = 3U*16U*1024U,
+        .offset = 3U*32U*1024U,
         .size   = 32U*1024U,
     },
     {
-        .offset = 4U*16U*1024U,
+        .offset = 4U*32U*1024U,
         .size   = 128U*1024U,
     },
     {
@@ -192,7 +192,7 @@ static const flash_descriptor_t efl_lld_descriptor = {
  .sectors           = efl_lld_sectors,
  .sectors_size      = 0U,
  .address           = (uint8_t *)FLASHAXI_BASE,
- .size              = FLASH_END - FLASHAXI_BASE,
+ .size              = FLASH_END - FLASHAXI_BASE + 1U,
 };
 #endif
 
@@ -214,11 +214,11 @@ const flash_sector_descriptor_t efl_lld_sectors_single_1M[FLASH_SECTOR_TOTAL_1M/
         .size   = 32U*1024U,
     },
     {
-        .offset = 3U*16U*1024U,
+        .offset = 3U*32U*1024U,
         .size   = 32U*1024U,
     },
     {
-        .offset = 4U*16U*1024U,
+        .offset = 4U*32U*1024U,
         .size   = 128U*1024U,
     },
     {
@@ -319,11 +319,11 @@ const flash_sector_descriptor_t efl_lld_sectors_single_2M[FLASH_SECTOR_TOTAL_2M/
         .size   = 32U*1024U,
     },
     {
-        .offset = 3U*16U*1024U,
+        .offset = 3U*32U*1024U,
         .size   = 32U*1024U,
     },
     {
-        .offset = 4U*16U*1024U,
+        .offset = 4U*32U*1024U,
         .size   = 128U*1024U,
     },
     {
@@ -569,7 +569,7 @@ static inline size_t stm32_flash_get_size(void) {
 static inline bool stm32_flash_dual_bank(EFlashDriver *eflp) {
 
 #if STM32_IS_DUAL_BANK
-  return ((eflp->flash->OPTCR & FLASH_OPTCR_nDBANK) != 0U);
+  return ((eflp->flash->OPTCR & FLASH_OPTCR_nDBANK) == 0U);
 #else
   (void)eflp;
   return false;
