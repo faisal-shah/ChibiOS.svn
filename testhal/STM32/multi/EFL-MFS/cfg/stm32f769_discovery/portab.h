@@ -42,11 +42,11 @@
 #define PORTAB_MFS_CFG \
   .flashp        = (BaseFlash *)&EFLD1, \
   .erased        = 0xFFFFFFFFU,         \
-  .bank_size     = 256U*1024U,          \
-  .bank0_start   = 10U,                  \
-  .bank0_sectors = 1U,                  \
-  .bank1_start   = 11U,                  \
-  .bank1_sectors = 1U
+  .bank_size     = 768U*1024U,          \
+  .bank0_start   = 6U,                  \
+  .bank0_sectors = 3U,                  \
+  .bank1_start   = 9U,                  \
+  .bank1_sectors = 3U
 
 /*===========================================================================*/
 /* Module pre-compile time settings.                                         */
