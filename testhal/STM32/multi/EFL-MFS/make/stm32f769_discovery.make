@@ -92,9 +92,9 @@ PROJECT = ch
 
 # Imported source files and paths
 CHIBIOS  := ../../../..
-CONFDIR  := ./cfg/stm32f767_nucleo-144
-BUILDDIR := ./build/stm32f767_nucleo-144
-DEPDIR   := ./.dep/stm32f767_nucleo-144
+CONFDIR  := ./cfg/stm32f769_discovery
+BUILDDIR := ./build/stm32f769_discovery
+DEPDIR   := ./.dep/stm32f769_discovery
 
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
@@ -103,7 +103,7 @@ include $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk/startup_stm32f7xx.m
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
 include $(CHIBIOS)/os/hal/ports/STM32/STM32F7xx/platform.mk
-include $(CHIBIOS)/os/hal/boards/ST_NUCLEO144_F767ZI/board.mk
+include $(CHIBIOS)/os/hal/boards/ST_STM32F769I_DISCOVERY/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -165,7 +165,7 @@ INCDIR = $(ALLINC) $(TESTINC) $(CONFDIR)
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS = -DMFS_CFG_MEMORY_ALIGNMENT=8 -DMFS_CFG_MAX_RECORDS=1024
+UDEFS = -DMFS_CFG_MEMORY_ALIGNMENT=8 -DMFS_CFG_MAX_RECORDS=4096U
 
 # Define ASM defines here
 UADEFS =

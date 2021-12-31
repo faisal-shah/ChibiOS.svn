@@ -29,24 +29,24 @@
 /* Module constants.                                                         */
 /*===========================================================================*/
 
-#define PORTAB_LINE_LED1            LINE_ZIO_D33
-#define PORTAB_LINE_LED2            LINE_LED3
+#define PORTAB_LINE_LED1            LINE_LED1_RED
+#define PORTAB_LINE_LED2            LINE_LED2_GREEN
 #define PORTAB_LED_OFF              PAL_LOW
 #define PORTAB_LED_ON               PAL_HIGH
 
-#define PORTAB_LINE_BUTTON          LINE_BUTTON
+#define PORTAB_LINE_BUTTON          LINE_BUTTON_USER
 #define PORTAB_BUTTON_PRESSED       PAL_HIGH
 
-#define PORTAB_SD1                  SD3
+#define PORTAB_SD1                  SD1
 
 #define PORTAB_MFS_CFG \
   .flashp        = (BaseFlash *)&EFLD1, \
   .erased        = 0xFFFFFFFFU,         \
-  .bank_size     = 128U*1024U,          \
-  .bank0_start   = 18U,                  \
-  .bank0_sectors = 3U,                  \
-  .bank1_start   = 21U,                  \
-  .bank1_sectors = 3U
+  .bank_size     = 256U*1024U,          \
+  .bank0_start   = 10U,                  \
+  .bank0_sectors = 1U,                  \
+  .bank1_start   = 11U,                  \
+  .bank1_sectors = 1U
 
 /*===========================================================================*/
 /* Module pre-compile time settings.                                         */

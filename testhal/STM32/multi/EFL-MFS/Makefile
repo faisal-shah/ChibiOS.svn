@@ -18,8 +18,8 @@ all:
 	@echo
 
 	@echo
-	@echo === Building for STM32F767-Nucleo-144 ==============================
-	+@make --no-print-directory -f ./make/stm32f767_nucleo-144.make all -j$(JOBS)
+	@echo === Building for STM32F769-Discovery ==============================
+	+@make --no-print-directory -f ./make/stm32f769_discovery.make all -j$(JOBS)
 	@echo ====================================================================
 	@echo
 
@@ -39,7 +39,7 @@ clean:
 	@echo
 
 	@echo
-	+@make --no-print-directory -f ./make/stm32f767_nucleo-144.make clean
+	+@make --no-print-directory -f ./make/stm32f769_discovery.make clean
 	@echo
 
 	@echo
