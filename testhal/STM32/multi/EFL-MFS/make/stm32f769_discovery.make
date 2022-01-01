@@ -87,8 +87,18 @@ endif
 # Project, sources and paths
 #
 
+ifeq ($(IS_DUAL_BANK),)
+	IS_DUAL_BANK = no
+else
+	IS_DUAL_BANK = yes
+endif
+
 # Define project name here
-PROJECT = ch
+ifeq ($(IS_DUAL_BANK),no)
+    PROJECT = ch
+else
+    PROJECT = ch_dualbank
+endif
 
 # Imported source files and paths
 CHIBIOS  := ../../../..
@@ -166,6 +176,9 @@ INCDIR = $(ALLINC) $(TESTINC) $(CONFDIR)
 
 # List all user C define here, like -D_DEBUG=1
 UDEFS = -DMFS_CFG_MEMORY_ALIGNMENT=8 -DMFS_CFG_MAX_RECORDS=8192U
+ifeq ($(IS_DUAL_BANK),yes)
+	UDEFS += -DMFS_DUAL_BANK_CONFIG
+endif
 
 # Define ASM defines here
 UADEFS =
