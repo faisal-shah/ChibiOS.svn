@@ -5,12 +5,12 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16 -mbig-endian
 endif
 
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
-  USE_COPT = 
+  USE_COPT =
 endif
 
 # C++ specific options here (added to USE_OPT).
@@ -25,12 +25,12 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT =
 endif
 
 # Enable this if you want link time optimizations (LTO)
 ifeq ($(USE_LTO),)
-  USE_LTO = yes
+  USE_LTO = no
 endif
 
 # If enabled, this option allows to compile the application in THUMB mode.
@@ -78,7 +78,7 @@ endif
 # Stack size to the allocated to the ARM Supervisor stack. This
 # stack is used for processing interrupts and exceptions.
 ifeq ($(USE_SUPERVISOR_STACKSIZE),)
-  USE_SUPERVISOR_STACKSIZE = 8
+  USE_SUPERVISOR_STACKSIZE = 0x400
 endif
 
 # Stack size to the allocated to the ARM Undefined stack. This
@@ -114,11 +114,11 @@ CHIBIOS = ../../..
 # Licensing files.
 include $(CHIBIOS)/os/license/license.mk
 # Startup files.
-include $(CHIBIOS)/os/common/startup/ARM/compilers/GCC/mk/startup_lpc214x.mk
+include $(CHIBIOS)/os/common/startup/ARM/compilers/GCC/mk/startup_tms470r1b1m.mk
 # HAL-OSAL files (optional).
 include $(CHIBIOS)/os/hal/hal.mk
-include $(CHIBIOS)/os/hal/ports/ARM7TDMI/LPC214x/platform.mk
-include $(CHIBIOS)/os/hal/boards/OLIMEX_LPC_P2148/board.mk
+include $(CHIBIOS)/os/hal/ports/ARM7TDMI/TMS470R1B1M/platform.mk
+include $(CHIBIOS)/os/hal/boards/OLIMEX_TMS470R1B1M/board.mk
 include $(CHIBIOS)/os/hal/osal/rt-nil/osal.mk
 # RTOS files (optional).
 include $(CHIBIOS)/os/rt/rt.mk
@@ -129,7 +129,7 @@ include $(CHIBIOS)/test/rt/rt_test.mk
 include $(CHIBIOS)/test/oslib/oslib_test.mk
 
 # Define linker script file here
-LDSCRIPT= $(STARTUPLD)/LPC2148.ld
+LDSCRIPT= $(STARTUPLD)/TMS470R1B1M.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.

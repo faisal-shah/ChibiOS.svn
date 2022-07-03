@@ -106,8 +106,7 @@ __port_switch_arm:
                 .global Irq_Handler
 Irq_Handler:
                 stmfd   sp!, {r0-r3, r12, lr}
-                ldr     r0, =ARM_IRQ_VECTOR_REG
-                ldr     r0, [r0]
+                ldr     r0, =irq_handler
                 ldr     lr, =_irq_ret_arm       // ISR return point.
                 bx      r0                      // Calling the ISR.
 _irq_ret_arm:
