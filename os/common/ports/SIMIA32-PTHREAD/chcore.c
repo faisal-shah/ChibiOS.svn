@@ -32,24 +32,19 @@
 #include <time.h>
 #endif
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <sched.h>
+#include <sys/sysinfo.h>
 #include "ch.h"
 
 /*===========================================================================*/
 /* Module local definitions.                                                 */
 /*===========================================================================*/
 
-/*
- * RTOS-specific context offset.
- */
-#if defined(_CHIBIOS_RT_CONF_)
-#define CONTEXT_OFFSET  "12"
-
-#elif defined(_CHIBIOS_NIL_CONF_)
-#define CONTEXT_OFFSET  "0"
-
-#else
-#error "invalid chconf.h"
-#endif
+#define LOG_DBG(format, ...) \
+    printf("%s::%s:%d " format "\n", __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
 
 /*===========================================================================*/
 /* Module exported variables.                                                */
@@ -57,6 +52,7 @@
 
 bool port_isr_context_flag;
 syssts_t port_irq_sts;
+static cpu_set_t sCpuAffinity;
 
 /*===========================================================================*/
 /* Module local types.                                                       */
@@ -70,41 +66,48 @@ syssts_t port_irq_sts;
 /* Module local functions.                                                   */
 /*===========================================================================*/
 
-/*===========================================================================*/
-/* Module exported functions.                                                */
-/*===========================================================================*/
+static void _wakeup_pthread(thread_t * tp) {
 
-/**
- * Performs a context switch between two threads.
- * @param otp the thread to be switched out
- * @param ntp the thread to be switched in
- */
-__attribute__((used))
-static void __dummy(thread_t *ntp, thread_t *otp) {
-  (void)ntp; (void)otp;
+  struct port_context * pctx = &tp->ctx;
+  if(pthread_self() != pctx->pthread)
+  {
+    pthread_mutex_lock(&pctx->sync);
+    pctx->cond_trig = true;
+    pthread_cond_signal(&pctx->cond);
+    pthread_mutex_unlock(&pctx->sync);
+  }
+}
 
-  asm volatile (
-#if defined(WIN32)
-                ".globl @port_switch@8                          \n\t"
-                "@port_switch@8:"
-#elif defined(__APPLE__)
-                ".globl _port_switch                            \n\t"
-                "_port_switch:"
-#else
-                ".globl port_switch                             \n\t"
-                "port_switch:"
-#endif
-                "push    %ebp                                   \n\t"
-                "push    %esi                                   \n\t"
-                "push    %edi                                   \n\t"
-                "push    %ebx                                   \n\t"
-                "movl    %esp, "CONTEXT_OFFSET"(%edx)           \n\t"
-                "movl    "CONTEXT_OFFSET"(%ecx), %esp           \n\t"
-                "pop     %ebx                                   \n\t"
-                "pop     %edi                                   \n\t"
-                "pop     %esi                                   \n\t"
-                "pop     %ebp                                   \n\t"
-                "ret");
+static void _suspend_pthread(thread_t * tp) {
+
+  struct port_context * pctx = &tp->ctx;
+  pthread_mutex_lock(&pctx->sync);
+
+  while(pctx->cond_trig == false)
+  {
+    pthread_cond_wait(&pctx->cond, &pctx->sync);
+  }
+
+  pctx->cond_trig = false;
+  pthread_mutex_unlock(&pctx->sync);
+}
+
+static int init_pthread_sync(thread_t * tp) {
+
+  int ret;
+  ret = pthread_mutex_init(&tp->ctx.sync, NULL);
+  if (ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to initialize mutex with return value: ", ret);
+  }
+  ret = pthread_cond_init(&tp->ctx.cond, NULL);
+  if (ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to initialize cond var with return value: ", ret);
+  }
+  tp->ctx.cond_trig = false;
+
+  return ret;
 }
 
 /**
@@ -112,15 +115,98 @@ static void __dummy(thread_t *ntp, thread_t *otp) {
  * @details If the work function returns @p chThdExit() is automatically
  *          invoked.
  */
-__attribute__((cdecl, noreturn))
-void _port_thread_start(msg_t (*pf)(void *), void *p) {
-
+__attribute__((noreturn))
+static void _port_thread_start(void *p) {
+  thread_t * pthd = (thread_t *)p;
+  _suspend_pthread(pthd);
   chSysUnlock();
-  pf(p);
+  pthd->ctx.funcp(pthd->ctx.arg);
   chThdExit(0);
   while(1);
 }
 
+/*===========================================================================*/
+/* Module exported functions.                                                */
+/*===========================================================================*/
+
+/**
+ * @brief   Port-related initialization code.
+ */
+
+void port_init(os_instance_t *oip) {
+
+  int ret;
+
+  port_irq_sts = (syssts_t)0;
+  port_isr_context_flag = false;
+
+  init_pthread_sync(&oip->mainthread);
+  oip->mainthread.ctx.pthread = pthread_self();
+
+
+  srand((unsigned int)pthread_self());
+  CPU_ZERO(&sCpuAffinity);
+  CPU_SET(rand() % get_nprocs(), &sCpuAffinity);
+  ret = pthread_setaffinity_np(pthread_self(), sizeof(sCpuAffinity), &sCpuAffinity);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to set cpu affinity return value: ", ret);
+  }
+}
+
+void _port_enter_critical(void) {
+
+  port_irq_sts++;
+}
+
+void _port_exit_critical(void) {
+
+  port_irq_sts--;
+}
+
+void _port_switch(thread_t *ntp, thread_t *otp) {
+
+  _wakeup_pthread(ntp);
+  _suspend_pthread(otp);
+}
+
+void _port_setup_context(thread_t *tp, stkalign_t *wbase, stkalign_t *wtop,
+                         tfunc_t pf, void *arg) {
+
+  int ret;
+  size_t stack_size;
+  pthread_attr_t pthd_attr;
+
+  stack_size = (size_t)((wtop - wbase + 1U) * sizeof(stkalign_t));
+
+  tp->ctx.funcp = pf;
+  tp->ctx.arg = arg;
+  init_pthread_sync(tp);
+  pthread_attr_init(&pthd_attr);
+  ret = pthread_attr_setstack(&pthd_attr, (size_t)wtop - stack_size + 1U, stack_size);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "[WARN] pthread_attr_setstack failed with return value: ", ret);
+  }
+
+  ret = pthread_attr_setaffinity_np(&pthd_attr, sizeof(sCpuAffinity), &sCpuAffinity);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to set cpu affinity return value: ", ret);
+  }
+
+  ret = pthread_create(&tp->ctx.pthread, &pthd_attr, _port_thread_start, tp);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to create pthread with return value: ", ret);
+  }
+
+  ret = pthread_attr_destroy(&pthd_attr);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to destroy pthread attr with return value: ", ret);
+  }
+}
 
 /**
  * @brief   Returns the current value of the realtime counter.

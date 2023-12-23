@@ -28,6 +28,9 @@
 #ifndef CHCORE_H
 #define CHCORE_H
 
+#include <pthread.h>
+#include <stdbool.h>
+
 /*===========================================================================*/
 /* Module constants.                                                         */
 /*===========================================================================*/
@@ -125,6 +128,8 @@
 /* Module data structures and types.                                         */
 /*===========================================================================*/
 
+typedef void (*tfunc_t)(void *p);
+
 /* The following code is not processed when the file is included from an
    asm module.*/
 #if !defined(_FROM_ASM_)
@@ -135,11 +140,6 @@
 typedef struct {
   uint8_t a[16];
 } stkalign_t __attribute__((aligned(16)));
-
-/**
- * @brief   Type of a generic x86 register.
- */
-typedef void *regx86;
 
 /**
  * @brief   Interrupt saved context.
@@ -155,11 +155,6 @@ struct port_extctx {
  *          switch.
  */
 struct port_intctx {
-  regx86  ebx;
-  regx86  edi;
-  regx86  esi;
-  regx86  ebp;
-  regx86  eip;
 };
 
 /**
@@ -168,7 +163,22 @@ struct port_intctx {
  *          defined as a pointer to a @p port_intctx structure.
  */
 struct port_context {
-  struct port_intctx *sp;
+    /**
+     * @brief   Thread function pointer.
+     */
+    tfunc_t funcp;
+    /**
+     * @brief   Thread argument.
+     */
+    void * arg;
+    pthread_t pthread;
+    pthread_mutex_t sync;
+    pthread_cond_t cond;
+    bool cond_trig;
+    /**
+     * Dummy stack pointer var to make shell_cmd.c happy
+     */
+    uint32_t sp;
 };
 
 #endif /* !defined(_FROM_ASM_) */
@@ -177,17 +187,19 @@ struct port_context {
 /* Module macros.                                                            */
 /*===========================================================================*/
 
-#define APUSH(p, a) do {                                                    \
-  (p) -= sizeof(void *);                                                    \
-  *(void **)(void *)(p) = (void*)(a);                                       \
-} while (false)
-
-/* Darwin requires the stack to be aligned to a 16-byte boundary at
- * the time of a call instruction (in case the called function needs
- * to save MMX registers). This aligns to 'mod' module 16, so that we'll end
- * up with the right alignment after pushing the args. */
-#define AALIGN(p, mask, mod)                                                \
-  p = (void *)((((uint32_t)(p) - (uint32_t)(mod)) & ~(uint32_t)(mask)) + (uint32_t)(mod))
+/**
+ * @brief   Port level context switch
+ * @note    Not a user function, it is meant to be invoked by the scheduler
+ *          itself or from within the port layer.
+ *
+ * @param[in] ntp       the thread to be switched in
+ * @param[in] otp       the thread to be switched out
+ *
+ * @special
+ */
+#define port_switch(ntp, otp) {                                           \
+    _port_switch(ntp, otp);                                               \
+}
 
 /**
  * @brief   Platform dependent part of the @p chThdCreateI() API.
@@ -195,22 +207,7 @@ struct port_context {
  *          by an @p port_intctx structure.
  */
 #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
-  /*lint -save -e611 -e9033 -e9074 -e9087 [10.8, 11.1, 11.3] Valid casts.*/ \
-  uint8_t *esp = (uint8_t *)wtop;                                           \
-  APUSH(esp, 0);                                                            \
-  uint8_t *savebp = esp;                                                    \
-  AALIGN(esp, 15, 8);                                                       \
-  APUSH(esp, arg);                                                          \
-  APUSH(esp, pf);                                                           \
-  APUSH(esp, 0);                                                            \
-  esp -= sizeof(struct port_intctx);                                        \
-  ((struct port_intctx *)(void *)esp)->eip = (void *)_port_thread_start;    \
-  ((struct port_intctx *)(void *)esp)->ebx = NULL;                          \
-  ((struct port_intctx *)(void *)esp)->edi = NULL;                          \
-  ((struct port_intctx *)(void *)esp)->esi = NULL;                          \
-  ((struct port_intctx *)(void *)esp)->ebp = (void *)savebp;                \
-  (tp)->ctx.sp = (struct port_intctx *)(void *)esp;                         \
-  /*lint -restore*/                                                         \
+    _port_setup_context(tp, wbase, wtop, pf, arg);                          \
 }
 
 /**
@@ -297,10 +294,13 @@ extern syssts_t port_irq_sts;
 #ifdef __cplusplus
 extern "C" {
 #endif
-  /*lint -save -e950 [Dir-2.1] Non-ANSI keywords are fine in the port layer.*/
-  __attribute__((fastcall)) void port_switch(thread_t *ntp, thread_t *otp);
-  __attribute__((cdecl, noreturn)) void _port_thread_start(msg_t (*pf)(void *p),
-                                                           void *p);
+
+  void port_init(os_instance_t *oip);
+  void _port_enter_critical(void);
+  void _port_exit_critical(void);
+  void _port_setup_context(thread_t *tp, stkalign_t *wbase, stkalign_t *wtop,
+          tfunc_t pf, void *arg);
+  void _port_switch(thread_t *ntp, thread_t *otp);
   /*lint -restore*/
   rtcnt_t port_rt_get_counter_value(void);
   void _sim_check_for_interrupts(void);
@@ -317,17 +317,6 @@ extern "C" {
 /* The following code is not processed when the file is included from an
    asm module.*/
 #if !defined(_FROM_ASM_)
-
-/**
- * @brief   Port-related initialization code.
- */
-static inline void port_init(os_instance_t *oip) {
-
-  (void)oip;
-
-  port_irq_sts = (syssts_t)0;
-  port_isr_context_flag = false;
-}
 
 /**
  * @brief   Returns a word encoding the current interrupts status.
@@ -371,7 +360,7 @@ static inline bool port_is_isr_context(void) {
  */
 static inline void port_lock(void) {
 
-  port_irq_sts = (syssts_t)1;
+  _port_enter_critical();
 }
 
 /**
@@ -380,7 +369,7 @@ static inline void port_lock(void) {
  */
 static inline void port_unlock(void) {
 
-  port_irq_sts = (syssts_t)0;
+  _port_exit_critical();
 }
 
 /**
@@ -390,7 +379,7 @@ static inline void port_unlock(void) {
  */
 static inline void port_lock_from_isr(void) {
 
-  port_irq_sts = (syssts_t)1;
+  port_lock();
 }
 
 /**
@@ -400,7 +389,7 @@ static inline void port_lock_from_isr(void) {
  */
 static inline void port_unlock_from_isr(void) {
 
-  port_irq_sts = (syssts_t)0;
+  port_unlock();
 }
 
 /**
@@ -408,7 +397,7 @@ static inline void port_unlock_from_isr(void) {
  */
 static inline void port_disable(void) {
 
-  port_irq_sts = (syssts_t)1;
+  port_lock();
 }
 
 /**
@@ -416,7 +405,7 @@ static inline void port_disable(void) {
  */
 static inline void port_suspend(void) {
 
-  port_irq_sts = (syssts_t)1;
+  port_lock();
 }
 
 /**
@@ -424,7 +413,7 @@ static inline void port_suspend(void) {
  */
 static inline void port_enable(void) {
 
-  port_irq_sts = (syssts_t)0;
+  port_unlock();
 }
 
 /**
