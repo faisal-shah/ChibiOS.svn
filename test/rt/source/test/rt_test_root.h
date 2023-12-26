@@ -78,7 +78,7 @@ extern "C" {
     #define THREADS_STACK_SIZE      48
   #elif defined(PORT__ARCHITECTURE_STM8)
     #define THREADS_STACK_SIZE      64
-  #elif defined(PORT__ARCHITECTURE_SIMIA32)
+  #elif defined(PORT_ARCHITECTURE_SIMIA32)
     #define THREADS_STACK_SIZE      512
   #else
     #define THREADS_STACK_SIZE      192
