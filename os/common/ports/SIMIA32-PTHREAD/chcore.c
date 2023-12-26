@@ -143,14 +143,14 @@ static int init_pthread_sync(thread_t * tp) {
  * @details If the work function returns @p chThdExit() is automatically
  *          invoked.
  */
-__attribute__((noreturn))
-static void _port_thread_start(void *p) {
+static void * _port_thread_start(void *p) {
   thread_t * pthd = (thread_t *)p;
   _suspend_pthread(pthd);
   chSysUnlock();
   pthd->ctx.funcp(pthd->ctx.arg);
   chThdExit(0);
   while(1);
+  return NULL;
 }
 
 /*===========================================================================*/
@@ -224,7 +224,7 @@ void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, vo
   tp->ctx.arg = arg;
   init_pthread_sync(tp);
   pthread_attr_init(&pthd_attr);
-  ret = pthread_attr_setstack(&pthd_attr, wbase, stack_size);
+  ret = pthread_attr_setstack(&pthd_attr, (void *)wbase, stack_size);
   if(ret != 0)
   {
     LOG_DBG("%s%d", "[WARN] pthread_attr_setstack failed with return value: ", ret);
@@ -248,7 +248,7 @@ void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, vo
     LOG_DBG("%s%d", "Failed to destroy pthread attr with return value: ", ret);
   }
 
-  LOG_DBG("wbase=0x%x, wtop=0x%x, size=%d", wbase, wtop, stack_size);
+  //LOG_DBG("wbase=0x%x, wtop=0x%x, size=%d", wbase, wtop, stack_size);
 }
 
 /**

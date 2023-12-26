@@ -209,7 +209,7 @@ struct port_context {
  *          by an @p port_intctx structure.
  */
 #define PORT_SETUP_CONTEXT(tp, wbase, wtop, pf, arg) {                      \
-    _port_setup_context(tp, wbase, wtop, pf, arg);                          \
+    _port_setup_context(tp, (size_t)wbase, (size_t)wtop, pf, (void *)arg);  \
 }
 
 /**
