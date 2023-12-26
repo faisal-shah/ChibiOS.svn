@@ -72,7 +72,8 @@ IINCDIR   = $(sort $(patsubst %,-I%,$(INCDIR) $(DINCDIR) $(UINCDIR)))
 LLIBDIR   = $(sort $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR)))
 
 # Macros
-DEFS      = $(DDEFS) $(UDEFS)
+# _GNU_SOURCE needed for CPU_* macros to set cpu affinity
+DEFS      = $(DDEFS) $(UDEFS) -D_GNU_SOURCE
 ADEFS     = $(DADEFS) $(UADEFS)
 
 # Libs
