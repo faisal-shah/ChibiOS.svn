@@ -156,12 +156,12 @@ void port_init(os_instance_t *oip) {
 
 void _port_enter_critical(void) {
 
-  port_irq_sts++;
+  port_irq_sts = (syssts_t)1;
 }
 
 void _port_exit_critical(void) {
 
-  port_irq_sts--;
+  port_irq_sts = (syssts_t)0;
 }
 
 void _port_switch(thread_t *ntp, thread_t *otp) {
