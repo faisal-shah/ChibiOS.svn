@@ -175,10 +175,12 @@ struct port_context {
     pthread_mutex_t sync;
     pthread_cond_t cond;
     bool cond_trig;
-    /**
-     * Dummy stack pointer var to make shell_cmd.c happy
+    /** Dummy stack pointer var to make shell_cmd.c happy. This is also used as
+     * a flag to cancel a pthread (pointed to by pThdToCancel) upon resume. 1 =
+     * cancel, 0 = do nothing
      */
     uint32_t sp;
+    pthread_t * pThdToCancel;
 };
 
 #endif /* !defined(_FROM_ASM_) */

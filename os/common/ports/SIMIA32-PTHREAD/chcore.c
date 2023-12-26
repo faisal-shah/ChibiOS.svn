@@ -80,15 +80,40 @@ static void _wakeup_pthread(thread_t * tp) {
 
 static void _suspend_pthread(thread_t * tp) {
 
+  int ret;
+  void * pthread_retval;
   struct port_context * pctx = &tp->ctx;
-  pthread_mutex_lock(&pctx->sync);
 
+  pthread_mutex_lock(&pctx->sync);
   while(pctx->cond_trig == false)
   {
     pthread_cond_wait(&pctx->cond, &pctx->sync);
   }
-
   pctx->cond_trig = false;
+
+  /*
+   * Check if there is a thread to cancel as this thread wakes up
+   */
+  if (pctx->sp == 1U)
+  {
+      ret = pthread_cancel(*pctx->pThdToCancel);
+      if (ret != 0)
+      {
+          LOG_DBG("%s%d", "Failed to cancel pthread with return value: ", ret);
+      }
+      ret = pthread_join(*pctx->pThdToCancel, &pthread_retval);
+      if (ret != 0)
+      {
+          LOG_DBG("%s%d", "Failed to join pthread with return value: ", ret);
+      }
+      if (pthread_retval != PTHREAD_CANCELED)
+      {
+          LOG_DBG("%s%d", "Failed to get proper error status from pthread join, return value: ", (int)pthread_retval);
+      }
+  }
+  pctx->sp = 0;
+  pctx->pThdToCancel = NULL;
+
   pthread_mutex_unlock(&pctx->sync);
 }
 
@@ -106,6 +131,9 @@ static int init_pthread_sync(thread_t * tp) {
     LOG_DBG("%s%d", "Failed to initialize cond var with return value: ", ret);
   }
   tp->ctx.cond_trig = false;
+
+  tp->ctx.sp = 0;
+  tp->ctx.pThdToCancel = NULL;
 
   return ret;
 }
@@ -164,13 +192,23 @@ void _port_exit_critical(void) {
   port_irq_sts = (syssts_t)0;
 }
 
-void _port_switch(thread_t *ntp, thread_t *otp) {
+void _port_switch(thread_t * ntp, thread_t * otp) {
 
+  /*
+   * If the outgoing thread is in CH_STATE_FINAL, notify the incoming thread
+   * that it should cancel it
+   */
+  if (otp->state == CH_STATE_FINAL) {
+    pthread_mutex_lock(&ntp->ctx.sync);
+    ntp->ctx.sp = 1U;
+    ntp->ctx.pThdToCancel = &otp->ctx.pthread;
+    pthread_mutex_unlock(&ntp->ctx.sync);
+  }
   _wakeup_pthread(ntp);
   _suspend_pthread(otp);
 }
 
-  void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, void *arg) {
+void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, void *arg) {
 
   int ret;
   size_t stack_size;
