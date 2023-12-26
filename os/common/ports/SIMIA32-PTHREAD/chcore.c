@@ -170,20 +170,23 @@ void _port_switch(thread_t *ntp, thread_t *otp) {
   _suspend_pthread(otp);
 }
 
-void _port_setup_context(thread_t *tp, stkalign_t *wbase, stkalign_t *wtop,
-                         tfunc_t pf, void *arg) {
+  void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, void *arg) {
 
   int ret;
   size_t stack_size;
   pthread_attr_t pthd_attr;
 
-  stack_size = (size_t)((wtop - wbase + 1U) * sizeof(stkalign_t));
+  /*
+   * wtop is pointing to the byte just outside of the stack range, so no need
+   * to + 1, i.e. no need for wtop - wbase + 1
+   */
+  stack_size = wtop - wbase;
 
   tp->ctx.funcp = pf;
   tp->ctx.arg = arg;
   init_pthread_sync(tp);
   pthread_attr_init(&pthd_attr);
-  ret = pthread_attr_setstack(&pthd_attr, (size_t)wtop - stack_size + 1U, stack_size);
+  ret = pthread_attr_setstack(&pthd_attr, wbase, stack_size);
   if(ret != 0)
   {
     LOG_DBG("%s%d", "[WARN] pthread_attr_setstack failed with return value: ", ret);
@@ -206,6 +209,8 @@ void _port_setup_context(thread_t *tp, stkalign_t *wbase, stkalign_t *wtop,
   {
     LOG_DBG("%s%d", "Failed to destroy pthread attr with return value: ", ret);
   }
+
+  LOG_DBG("wbase=0x%x, wtop=0x%x, size=%d", wbase, wtop, stack_size);
 }
 
 /**

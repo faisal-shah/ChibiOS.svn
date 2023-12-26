@@ -298,8 +298,7 @@ extern "C" {
   void port_init(os_instance_t *oip);
   void _port_enter_critical(void);
   void _port_exit_critical(void);
-  void _port_setup_context(thread_t *tp, stkalign_t *wbase, stkalign_t *wtop,
-          tfunc_t pf, void *arg);
+  void _port_setup_context(thread_t *tp, size_t wbase, size_t wtop, tfunc_t pf, void *arg);
   void _port_switch(thread_t *ntp, thread_t *otp);
   /*lint -restore*/
   rtcnt_t port_rt_get_counter_value(void);
