@@ -72,6 +72,14 @@
 #define SIM_SD2_PORT                        29002
 #endif
 
+/**
+ * @brief   Enable TTY based serial drivers as alternative to socket,
+ *          should be defined as "TRUE"/"FALSE" in mcuconf.h. Default is FALSE
+ */
+#if !defined(USE_SIM_SERIAL_TTY) || defined(__DOXYGEN__)
+#define USE_SIM_SERIAL_TTY   FALSE
+#endif
+
 /*===========================================================================*/
 /* Unsupported event flags and custom events.                                */
 /*===========================================================================*/
@@ -89,11 +97,60 @@
  *          initializers.
  */
 typedef struct hal_serial_config {
+#if USE_SIM_SERIAL_TTY == TRUE || defined(__DOXYGEN__)
+  /**
+   * @brief   Device name with path: e.g, /dev/ttyS0, /dev/pts/0
+   */
+  const char * dev_node;
+  /**
+   * @brief   If True, setup termios. Otherwise do not, just open the port.
+   */
+  bool setup_termios;
+  /**
+   * @brief   Should be of type speed_t: B9600, B115200, etc..see termios.h
+   */
+  uint32_t speed;
+  /**
+   * @brief   Parity control: 0 = off, 1 = odd, 2 = even.
+   */
+  int parity;
+  /**
+   * @brief   Data bit length: 7,8 valid values.
+   */
+  int data_size;
+  /**
+   * @brief   Num of stop bits: 1,2 stop bits
+   */
+  int stop_bit;
+  /**
+   * @brief   Flow Ctl: 0 = off, 1 = on (XON/XOFF software flow control only)
+   */
+  int flow_control;
+#endif
 } SerialConfig;
 
 /**
  * @brief   @p SerialDriver specific data.
  */
+#if USE_SIM_SERIAL_TTY
+#define _serial_driver_data                                                 \
+  _base_asynchronous_channel_data                                           \
+  /* Driver state.*/                                                        \
+  sdstate_t                 state;                                          \
+  /* Input queue.*/                                                         \
+  input_queue_t             iqueue;                                         \
+  /* Output queue.*/                                                        \
+  output_queue_t            oqueue;                                         \
+  /* Input circular buffer.*/                                               \
+  uint8_t                   ib[SERIAL_BUFFERS_SIZE];                        \
+  /* Output circular buffer.*/                                              \
+  uint8_t                   ob[SERIAL_BUFFERS_SIZE];                        \
+  /* End of the mandatory fields.*/                                         \
+  /* pseudo terminal device name with path, e.g, /dev/pts/1 */              \
+  const char * dev_node;                                                    \
+  /* file descriptor associated with an open tty device */                  \
+  int fd;
+#else
 #define _serial_driver_data                                                 \
   _base_asynchronous_channel_data                                           \
   /* Driver state.*/                                                        \
@@ -113,6 +170,7 @@ typedef struct hal_serial_config {
   int                       com_data;                                       \
   /* Port readable name.*/                                                  \
   const char                *com_name;
+#endif
 
 /*===========================================================================*/
 /* External declarations.                                                    */
@@ -131,7 +189,13 @@ extern "C" {
   void sd_lld_init(void);
   void sd_lld_start(SerialDriver *sdp, const SerialConfig *config);
   void sd_lld_stop(SerialDriver *sdp);
+#if USE_SIM_SERIAL_TTY
+  bool sd_lld_interrupt_pending(SerialDriver * sdp);
+  void sd_lld_irq_handler_serial1(void);
+  void sd_lld_irq_handler_serial2(void);
+#else
   bool sd_lld_interrupt_pending(void);
+#endif
 #ifdef __cplusplus
 }
 #endif

@@ -111,9 +111,24 @@ void _sim_check_for_interrupts(void) {
   struct timespec now, tdiff;
 
 #if HAL_USE_SERIAL
+#if USE_SIM_SERIAL_TTY
+#if USE_SIM_SERIAL1
+  if (sd_lld_interrupt_pending(&SD1)) {
+    sd_lld_irq_handler_serial1();
+    reschedule_if_needed();
+  }
+#endif
+#if USE_SIM_SERIAL2
+  if (sd_lld_interrupt_pending(&SD2)) {
+    sd_lld_irq_handler_serial2();
+    reschedule_if_needed();
+  }
+#endif
+#else
   if (sd_lld_interrupt_pending()) {
     reschedule_if_needed();
   }
+#endif
 #endif
 
   clock_gettime(CLOCK_MONOTONIC, &now);
