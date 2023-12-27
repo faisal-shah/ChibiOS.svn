@@ -25,8 +25,36 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
+#include <sys/types.h>
 
 #include "hal.h"
+
+/*
+ * from <sys/time.h>
+ */
+#define	timespeccmp(tvp, uvp, cmp)					\
+	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
+	    ((tvp)->tv_nsec cmp (uvp)->tv_nsec) :			\
+	    ((tvp)->tv_sec cmp (uvp)->tv_sec))
+
+#define	timespecadd(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec + (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec + (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec >= 1000000000L) {			\
+			(vsp)->tv_sec++;				\
+			(vsp)->tv_nsec -= 1000000000L;			\
+		}							\
+	} while (0)
+#define	timespecsub(tsp, usp, vsp)					\
+	do {								\
+		(vsp)->tv_sec = (tsp)->tv_sec - (usp)->tv_sec;		\
+		(vsp)->tv_nsec = (tsp)->tv_nsec - (usp)->tv_nsec;	\
+		if ((vsp)->tv_nsec < 0) {				\
+			(vsp)->tv_sec--;				\
+			(vsp)->tv_nsec += 1000000000L;			\
+		}							\
+	} while (0)
 
 /*===========================================================================*/
 /* Driver exported variables.                                                */
@@ -36,12 +64,23 @@
 /* Driver local variables and types.                                         */
 /*===========================================================================*/
 
-static struct timeval nextcnt;
-static struct timeval tick = {0UL, 1000000UL / OSAL_ST_FREQUENCY};
+static struct timespec deadline;
+static struct timespec dt = {0UL, 1000000000UL / OSAL_ST_FREQUENCY};
+static uint32_t ctr = 0;
 
 /*===========================================================================*/
 /* Driver local functions.                                                   */
 /*===========================================================================*/
+
+static void reschedule_if_needed (void)
+{
+    __dbg_check_lock();
+    if (chSchIsPreemptionRequired())
+    {
+        chSchDoPreemption();
+    }
+    __dbg_check_unlock();
+}
 
 /*===========================================================================*/
 /* Driver interrupt handlers.                                                */
@@ -61,27 +100,38 @@ void hal_lld_init(void) {
 #else
   puts("ChibiOS/RT simulator (Linux)\n");
 #endif
-  gettimeofday(&nextcnt, NULL);
-  timeradd(&nextcnt, &tick, &nextcnt);
+  clock_gettime(CLOCK_MONOTONIC, &deadline);
+  timespecadd(&deadline, &dt, &deadline);
 }
 
 /**
  * @brief   Interrupt simulation.
  */
 void _sim_check_for_interrupts(void) {
-  struct timeval tv;
-  bool int_occurred = false;
+  struct timespec now, tdiff;
 
 #if HAL_USE_SERIAL
   if (sd_lld_interrupt_pending()) {
-    int_occurred = true;
+    reschedule_if_needed();
   }
 #endif
 
-  gettimeofday(&tv, NULL);
-  if (timercmp(&tv, &nextcnt, >=)) {
-    int_occurred = true;
-    timeradd(&nextcnt, &tick, &nextcnt);
+  clock_gettime(CLOCK_MONOTONIC, &now);
+
+  if (++ctr % 50 == 0)
+  {
+    timespecsub(&now, &deadline, &tdiff);
+    int64_t nsec_divergence = tdiff.tv_sec * 1000000000ULL + tdiff.tv_nsec;
+    if (((unsigned long long)nsec_divergence > 1000000000ULL) && (tdiff.tv_sec >= 0))
+    {
+        fprintf(stderr, "Current divergence is %llu msec. Consider reducing CH_CFG_ST_FREQUENCY.\n", nsec_divergence/1000000ULL);
+    }
+    ctr = 0;
+  }
+
+  if (timespeccmp(&now, &deadline, >=))
+  {
+    timespecadd(&deadline, &dt, &deadline);
 
     CH_IRQ_PROLOGUE();
 
@@ -90,14 +140,10 @@ void _sim_check_for_interrupts(void) {
     chSysUnlockFromISR();
 
     CH_IRQ_EPILOGUE();
+    reschedule_if_needed();
   }
 
-  if (int_occurred) {
-    __dbg_check_lock();
-    if (chSchIsPreemptionRequired())
-      chSchDoPreemption();
-    __dbg_check_unlock();
-  }
+  clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &deadline, NULL);
 }
 
 /** @} */
