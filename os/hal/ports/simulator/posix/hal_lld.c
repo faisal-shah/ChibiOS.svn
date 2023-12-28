@@ -105,6 +105,40 @@ void _sim_check_for_interrupts(void) {
 #endif
 #endif
 
+#if HAL_USE_GPT
+#if SIMULATOR_GPT_USE_TIM1
+  if (gpt_lld_interrupt_pending(&GPTD1))
+  {
+    gpt_lld_irq_handler_tim1();
+    reschedule_if_needed();
+  }
+#endif
+#if SIMULATOR_GPT_USE_TIM2
+  if (gpt_lld_interrupt_pending(&GPTD2))
+  {
+    gpt_lld_irq_handler_tim2();
+    reschedule_if_needed();
+  }
+#endif
+#endif
+
+#if HAL_USE_ADC
+#if SIMULATOR_ADC_USE_ADC1
+  if (adc_lld_interrupt_pending0())
+  {
+    adc_lld_int_handler0();
+    reschedule_if_needed();
+  }
+#endif
+#if SIMULATOR_ADC_USE_ADC2
+  if (adc_lld_interrupt_pending1())
+  {
+    adc_lld_int_handler1();
+    reschedule_if_needed();
+  }
+#endif
+#endif
+
   clock_gettime(CLOCK_MONOTONIC, &now);
 
   if (++ctr % 50 == 0)
