@@ -74,7 +74,6 @@
 /* Derived constants and error checks.                                       */
 /*===========================================================================*/
 
-
 #if CAN_USE_SLEEP_MODE && !CAN_SUPPORTS_SLEEP
 #error "CAN sleep mode not supported in this architecture"
 #endif
@@ -214,7 +213,7 @@ struct CANDriver {
 /* External declarations.                                                    */
 /*===========================================================================*/
 
-#define can_lld_abort(canp,mailbox)
+#define can_lld_abort(canp, mailbox)
 
 #if SIMULATOR_USE_CAN1 && !defined(__DOXYGEN__)
 extern CANDriver CAND1;

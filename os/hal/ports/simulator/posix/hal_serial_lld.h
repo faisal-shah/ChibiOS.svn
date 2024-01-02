@@ -146,9 +146,9 @@ typedef struct hal_serial_config {
   /* Output circular buffer.*/                                              \
   uint8_t                   ob[SERIAL_BUFFERS_SIZE];                        \
   /* End of the mandatory fields.*/                                         \
-  /* pseudo terminal device name with path, e.g, /dev/pts/1 */              \
+  /* Pseudo terminal device name with path, e.g, /dev/pts/1 */              \
   const char * dev_node;                                                    \
-  /* file descriptor associated with an open tty device */                  \
+  /* File descriptor associated with an open tty device */                  \
   int fd;
 #else
 #define _serial_driver_data                                                 \

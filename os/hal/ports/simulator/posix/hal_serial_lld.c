@@ -35,7 +35,6 @@
 #include <sys/stat.h>
 #endif
 
-
 #if HAL_USE_SERIAL || defined(__DOXYGEN__)
 
 /*===========================================================================*/
@@ -69,7 +68,7 @@ static const SerialConfig default_config = {
 #if USE_SIM_SERIAL_TTY == TRUE
 #define container_of(ptr, type, member) ({                      \
         const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)( (char *)__mptr - offsetof(type,member) );})
+        (type *)( (char *)__mptr - offsetof(type, member) );})
 
 static int init(SerialDriver *sdp, const SerialConfig *config) {
   osalDbgCheck(sdp != NULL && config != NULL);
@@ -104,7 +103,7 @@ static int init(SerialDriver *sdp, const SerialConfig *config) {
       return -1;
   }
 
-  switch(config->flow_control) {
+  switch (config->flow_control) {
     case 0:
       tc_cfg.c_iflag &= ~(IXON | IXOFF);
       break;
@@ -119,7 +118,7 @@ static int init(SerialDriver *sdp, const SerialConfig *config) {
   tc_cfg.c_oflag = 0;
 
   tc_cfg.c_cflag &= ~(CSIZE);
-  switch(config->data_size) {
+  switch (config->data_size) {
     case 7:
       tc_cfg.c_cflag |= CS7;
       break;
@@ -131,7 +130,7 @@ static int init(SerialDriver *sdp, const SerialConfig *config) {
       return -1;
   }
 
-  switch(config->stop_bit) {
+  switch (config->stop_bit) {
     case 1:
       tc_cfg.c_cflag &= ~(CSTOPB);
       break;
@@ -167,10 +166,10 @@ static void onotify_cb(io_queue_t * qp) {
   uint8_t data[1];
   int n = 0;
 
-  while((n = sdRequestDataI(sdp)) != MSG_TIMEOUT) {
+  while ((n = sdRequestDataI(sdp)) != MSG_TIMEOUT) {
     data[0] = n;
     n = write(sdp->fd, data, sizeof(data));
-    switch(n) {
+    switch (n) {
       case 0:
         fprintf(stderr, "data not written to tty device\n");
         goto cleanup;
@@ -179,7 +178,7 @@ static void onotify_cb(io_queue_t * qp) {
           perror("outint: read on tty device failed");
         goto cleanup;
     }
-  } while(n != MSG_TIMEOUT);
+  } while (n != MSG_TIMEOUT);
 
 cleanup:
   chSchRescheduleS();
@@ -193,7 +192,7 @@ static void serve_interrupt(SerialDriver * sdp) {
 
   while (1) {
     int n = read(sdp->fd, data, sizeof(data));
-    switch(n) {
+    switch (n) {
       case 0:
         return;
       case -1:
@@ -227,7 +226,7 @@ static bool inint(SerialDriver * sdp) {
   struct timeval tv = {0};
 
   int ret = select(sdp->fd + 1, &fd_in, NULL, NULL, &tv);
-  switch(ret)
+  switch (ret)
   {
     case -1:
       perror("inint: select() call on tty device failed.");

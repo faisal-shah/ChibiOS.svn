@@ -203,7 +203,6 @@ void can_lld_rx_int_handler0(void) {
 }
 #endif /* SIMULATOR_USE_CAN1 */
 
-
 #if SIMULATOR_USE_CAN2 || defined(__DOXYGEN__)
 /**
  * @brief   CAN2 RX interrupt handler.
@@ -291,7 +290,7 @@ void can_lld_start(CANDriver *canp) {
   struct ifreq ifr;
   strcpy(ifr.ifr_name, ifname);
   ifr.ifr_ifindex = if_nametoindex(ifr.ifr_name);
-  if(!ifr.ifr_ifindex)
+  if (!ifr.ifr_ifindex)
   {
     osalSysHalt("Error in getting interface index");
   }
@@ -388,10 +387,16 @@ void can_lld_transmit(CANDriver *canp,
   }
 #if (CAN_ENFORCE_USE_CALLBACKS == FALSE)
   osalThreadDequeueAllI(&(canp)->txqueue, MSG_OK);
-  osalEventBroadcastFlagsI(&(canp)->txempty_event, CAN_MAILBOX_TO_MASK(1)); // There is only one mailbox:
+  /*
+   * There is only one mailbox
+   */
+  osalEventBroadcastFlagsI(&(canp)->txempty_event, CAN_MAILBOX_TO_MASK(1));
 #else
   if ((canp)->txempty_cb != NULL) {
-    (canp)->txempty_cb(canp, CAN_MAILBOX_TO_MASK(1)); // There is only one mailbox:
+    /*
+     * There is only one mailbox
+     */
+    (canp)->txempty_cb(canp, CAN_MAILBOX_TO_MASK(1));
   }
   osalThreadDequeueAllI(&(canp)->txqueue, MSG_OK);
 #endif

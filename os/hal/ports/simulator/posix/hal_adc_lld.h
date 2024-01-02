@@ -64,9 +64,8 @@ typedef enum {
   adcsample_t * channel_data;                                               \
   /* Number of channels */                                                  \
   size_t nch;                                                               \
-  /* virtual timer for continuous mode */                                   \
+  /* Virtual timer for continuous mode */                                   \
   virtual_timer_t vt
-
 
 /**
  * @brief   Low level fields of the ADC configuration structure.
@@ -74,14 +73,13 @@ typedef enum {
 #define adc_lld_config_fields                                               \
   /* Continuous mode (internally triggered) */                              \
   bool continuous;                                                          \
-  /* conversion time for continuous mode */                                 \
+  /* Conversion time for continuous mode */                                 \
   sysinterval_t dt;                                                         \
-  /* start of conversion callback */                                        \
+  /* Start of conversion callback */                                        \
   adccallback_t start_conv_cb;                                              \
-  /* end of conversion callback, before data is copied */                   \
-  /* from channel_data to user buffer */                                    \
+  /* End of conversion callback, before data is copied */                   \
+  /* From channel_data to user buffer */                                    \
   adccallback_t conv_cb
-
 
 /**
  * @brief   Low level fields of the ADC configuration structure.
@@ -89,7 +87,6 @@ typedef enum {
 #define adc_lld_configuration_group_fields                                  \
   /* Default channel data */                                                \
   adcsample_t * channels_default
-
 
 /*===========================================================================*/
 /* External declarations.                                                    */
