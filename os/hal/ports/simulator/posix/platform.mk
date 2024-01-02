@@ -5,7 +5,8 @@ PLATFORMSRC = ${CHIBIOS}/os/hal/ports/simulator/posix/hal_lld.c \
               ${CHIBIOS}/os/hal/ports/simulator/hal_pal_lld.c \
               ${CHIBIOS}/os/hal/ports/simulator/hal_st_lld.c \
               ${CHIBIOS}/os/hal/ports/simulator/hal_adc_lld.c \
-              ${CHIBIOS}/os/hal/ports/simulator/hal_gpt_lld.c
+              ${CHIBIOS}/os/hal/ports/simulator/hal_gpt_lld.c \
+              ${CHIBIOS}/os/hal/ports/simulator/hal_can_lld.c
 
 
 # Required include directories

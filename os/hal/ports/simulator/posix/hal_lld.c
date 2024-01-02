@@ -139,6 +139,32 @@ void _sim_check_for_interrupts(void) {
 #endif
 #endif
 
+#if HAL_USE_CAN
+#if SIMULATOR_USE_CAN1
+  if (can_lld_interrupt_pending0())
+  {
+    can_lld_rx_int_handler0();
+    reschedule_if_needed();
+  }
+#endif
+
+#if SIMULATOR_USE_CAN2
+  if (can_lld_interrupt_pending1())
+  {
+    can_lld_rx_int_handler1();
+    reschedule_if_needed();
+  }
+#endif
+
+#if SIMULATOR_USE_CAN3
+  if (can_lld_interrupt_pending2())
+  {
+    can_lld_rx_int_handler2();
+    reschedule_if_needed();
+  }
+#endif
+#endif
+
   clock_gettime(CLOCK_MONOTONIC, &now);
 
   if (++ctr % 50 == 0)
