@@ -144,7 +144,24 @@ static int init_pthread_sync(thread_t * tp) {
  *          invoked.
  */
 static void * _port_thread_start(void *p) {
+  int ret;
   thread_t * pthd = (thread_t *)p;
+
+  /*
+   * Set name of pthread. Cannot be done earlier in _port_setup_context because
+   * that function has no way to get the thread descriptor. By the time the
+   * thread is started (here), the thread name has been filled in the thread_t
+   * structure, and is available.
+   */
+  /* pthread name maximum of 16 characters include null byte */
+  char thread_name[16] = {0};
+  strncpy(thread_name, pthd->name, sizeof(thread_name)/sizeof(thread_name[0])-1);
+  ret = pthread_setname_np(pthd->ctx.pthread, thread_name);
+  if(ret != 0)
+  {
+    LOG_DBG("%s%d", "Failed to set name of pthread with return value: ", ret);
+  }
+
   _suspend_pthread(pthd);
   chSysUnlock();
   pthd->ctx.funcp(pthd->ctx.arg);
